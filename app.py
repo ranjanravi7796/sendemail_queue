@@ -15,18 +15,19 @@ def home():
         data = request.get_json()
         messages = data['messages']
         emailids = data['emailids']
+        job_ids = []
+        job_register_time = []
         for receiver_email,message in zip(emailids,messages):
             print(receiver_email)
             print(message)
                     
             #put the job in redis queue, the worker thread running in bg will pick and execute it
             job = queue.enqueue(execute_task, args=(receiver_email,message))
-
-            print(job.id) #printing job id and time to check
-            print(job.enqueued_at)
+            job_ids.append(job.id)
+            job_register_time.append(job.enqueued_at)
         
-        return render_template("success.html") #once all tasks were done, success page will be loaded
-        
+        job_dict = {"job_id_list":job_ids, "job_register_list":job_register_time}
+        return jsonify(job_dict)      #return job details as response
         
     else: #if the request is GET, simply display home page
         return render_template("home.html")
